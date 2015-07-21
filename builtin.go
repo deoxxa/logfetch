@@ -1,4 +1,4 @@
-package main
+package logfetch
 
 import (
 	"regexp"
@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-func grok(in <-chan map[string]interface{}, field, pattern string) <-chan map[string]interface{} {
+func Grok(in <-chan map[string]interface{}, field, pattern string) <-chan map[string]interface{} {
 	r := regexp.MustCompile(pattern)
 
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		f, ok := m[field]
 		if !ok {
 			return m
@@ -35,8 +35,8 @@ func grok(in <-chan map[string]interface{}, field, pattern string) <-chan map[st
 	})
 }
 
-func merge(in <-chan map[string]interface{}, fields map[string]interface{}) <-chan map[string]interface{} {
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+func Merge(in <-chan map[string]interface{}, fields map[string]interface{}) <-chan map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		for k, v := range fields {
 			m[k] = v
 		}
@@ -45,7 +45,7 @@ func merge(in <-chan map[string]interface{}, fields map[string]interface{}) <-ch
 	})
 }
 
-func choice(in <-chan map[string]interface{}, field string, options map[string]func(<-chan map[string]interface{}) <-chan map[string]interface{}) <-chan map[string]interface{} {
+func Choice(in <-chan map[string]interface{}, field string, options map[string]func(<-chan map[string]interface{}) <-chan map[string]interface{}) <-chan map[string]interface{} {
 	c := make(chan map[string]interface{})
 
 	kmap := make(map[string]int)
@@ -79,11 +79,11 @@ func choice(in <-chan map[string]interface{}, field string, options map[string]f
 		}
 	}()
 
-	return fanIn(oarr...)
+	return FanIn(oarr...)
 }
 
-func parseInt(in <-chan map[string]interface{}, keys []string) <-chan map[string]interface{} {
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+func ParseInt(in <-chan map[string]interface{}, keys []string) <-chan map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		for _, k := range keys {
 			f, ok := m[k]
 			if !ok {
@@ -107,8 +107,8 @@ func parseInt(in <-chan map[string]interface{}, keys []string) <-chan map[string
 	})
 }
 
-func parseNumber(in <-chan map[string]interface{}, keys []string) <-chan map[string]interface{} {
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+func ParseNumber(in <-chan map[string]interface{}, keys []string) <-chan map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		for _, k := range keys {
 			f, ok := m[k]
 			if !ok {
@@ -135,8 +135,8 @@ func parseNumber(in <-chan map[string]interface{}, keys []string) <-chan map[str
 	})
 }
 
-func parseTime(in <-chan map[string]interface{}, key, layout string) <-chan map[string]interface{} {
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+func ParseTime(in <-chan map[string]interface{}, key, layout string) <-chan map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		f, ok := m[key]
 		if !ok {
 			return m
@@ -194,8 +194,8 @@ var timeFormats = []string{
 	"1/2/2006 15:04",
 }
 
-func guessTime(in <-chan map[string]interface{}, key string) <-chan map[string]interface{} {
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+func GuessTime(in <-chan map[string]interface{}, key string) <-chan map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		f, ok := m[key]
 		if !ok {
 			return m

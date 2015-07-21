@@ -1,4 +1,4 @@
-package main
+package logfetch
 
 import (
 	"bytes"
@@ -6,12 +6,12 @@ import (
 	"net/http"
 )
 
-type logglyOptions struct {
-	host string
-	key  string
+type LogglyOptions struct {
+	Host string
+	Key  string
 }
 
-func sendToLoggly(in <-chan map[string]interface{}, options logglyOptions) <-chan map[string]interface{} {
+func SendToLoggly(in <-chan map[string]interface{}, options LogglyOptions) <-chan map[string]interface{} {
 	o := make(chan map[string]interface{})
 
 	go func() {
@@ -23,7 +23,7 @@ func sendToLoggly(in <-chan map[string]interface{}, options logglyOptions) <-cha
 				panic(err)
 			}
 
-			r, err := http.Post("http://"+options.host, "application/json", bytes.NewReader(d))
+			r, err := http.Post("http://"+options.Host, "application/json", bytes.NewReader(d))
 			if err != nil || r.StatusCode != 200 {
 				o <- m
 			}

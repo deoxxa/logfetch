@@ -1,4 +1,4 @@
-package main
+package logfetch
 
 import (
 	"bufio"
@@ -15,30 +15,26 @@ import (
 
 	"fknsrs.biz/p/seendb"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-var (
-	awsAccessKey = app.Flag("aws_access_key", "AWS access key.").OverrideDefaultFromEnvar("AWS_ACCESS_KEY").Required().String()
-	awsSecretKey = app.Flag("aws_secret_key", "AWS secret key.").OverrideDefaultFromEnvar("AWS_SECRET_KEY").Required().String()
-	awsRegion    = app.Flag("aws_region", "AWS region.").OverrideDefaultFromEnvar("AWS_DEFAULT_REGION").String()
-)
-
-type s3Options struct {
-	bucket  string
-	prefix  string
-	include string
-	exclude string
+type S3Options struct {
+	AWSConfig *aws.Config
+	Bucket    string
+	Prefix    string
+	Include   string
+	Exclude   string
 }
 
-func readFromS3(options s3Options) <-chan map[string]interface{} {
+func ReadFromS3(options S3Options) <-chan map[string]interface{} {
 	ch := make(chan map[string]interface{})
 
-	c := s3.New(&aws.Config{
-		Credentials: credentials.NewStaticCredentials(*awsAccessKey, *awsSecretKey, ""),
-		Region:      *awsRegion,
-	})
+	cfg := options.AWSConfig
+	if cfg == nil {
+		cfg = aws.DefaultConfig
+	}
+
+	c := s3.New(cfg)
 
 	u, err := user.Current()
 	if err != nil {
@@ -46,21 +42,21 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 	}
 
 	var includeRegexp *regexp.Regexp
-	if options.include != "" {
-		includeRegexp = regexp.MustCompile(options.include)
+	if options.Include != "" {
+		includeRegexp = regexp.MustCompile(options.Include)
 	}
 
 	var excludeRegexp *regexp.Regexp
-	if options.exclude != "" {
-		excludeRegexp = regexp.MustCompile(options.exclude)
+	if options.Exclude != "" {
+		excludeRegexp = regexp.MustCompile(options.Exclude)
 	}
 
 	sha := crypto.SHA1.New()
 	sha.Write([]byte(strings.Join([]string{
-		options.bucket,
-		options.prefix,
-		options.include,
-		options.exclude,
+		options.Bucket,
+		options.Prefix,
+		options.Include,
+		options.Exclude,
 	}, "$$")))
 	stateFile := path.Join(u.HomeDir, ".logfetch", "s3_"+hex.EncodeToString(sha.Sum(nil)))
 
@@ -80,11 +76,11 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 		outer:
 			for {
 				listConfig := s3.ListObjectsInput{
-					Bucket: aws.String(options.bucket),
+					Bucket: aws.String(options.Bucket),
 				}
 
-				if options.prefix != "" {
-					listConfig.Prefix = aws.String(options.prefix)
+				if options.Prefix != "" {
+					listConfig.Prefix = aws.String(options.Prefix)
 				}
 
 				if marker != "" {
@@ -115,7 +111,7 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 					}
 
 					fileConfig := s3.GetObjectInput{
-						Bucket: aws.String(options.bucket),
+						Bucket: aws.String(options.Bucket),
 						Key:    o.Key,
 					}
 
@@ -162,7 +158,7 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 
 						ch <- map[string]interface{}{
 							"text":      l,
-							"s3_bucket": options.bucket,
+							"s3_bucket": options.Bucket,
 							"s3_key":    *o.Key,
 							"s3_line":   i,
 						}

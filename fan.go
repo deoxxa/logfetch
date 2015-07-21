@@ -1,10 +1,10 @@
-package main
+package logfetch
 
 import (
 	"sync"
 )
 
-func fanIn(in ...<-chan map[string]interface{}) <-chan map[string]interface{} {
+func FanIn(in ...<-chan map[string]interface{}) <-chan map[string]interface{} {
 	r := make(chan map[string]interface{})
 
 	var wg sync.WaitGroup
@@ -27,7 +27,7 @@ func fanIn(in ...<-chan map[string]interface{}) <-chan map[string]interface{} {
 	return r
 }
 
-func fanOut(in <-chan map[string]interface{}, out ...func(<-chan map[string]interface{}) <-chan map[string]interface{}) []<-chan map[string]interface{} {
+func FanOut(in <-chan map[string]interface{}, out ...func(<-chan map[string]interface{}) <-chan map[string]interface{}) []<-chan map[string]interface{} {
 	r := make([]<-chan map[string]interface{}, len(out))
 
 	c := make([]chan map[string]interface{}, len(out))
@@ -53,6 +53,6 @@ func fanOut(in <-chan map[string]interface{}, out ...func(<-chan map[string]inte
 	return r
 }
 
-func fanThrough(in <-chan map[string]interface{}, via ...func(<-chan map[string]interface{}) <-chan map[string]interface{}) <-chan map[string]interface{} {
-	return fanIn(fanOut(in, via...)...)
+func FanThrough(in <-chan map[string]interface{}, via ...func(<-chan map[string]interface{}) <-chan map[string]interface{}) <-chan map[string]interface{} {
+	return FanIn(FanOut(in, via...)...)
 }

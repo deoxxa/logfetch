@@ -1,4 +1,4 @@
-package main
+package logfetch
 
 import (
 	"github.com/kr/logfmt"
@@ -11,8 +11,8 @@ func (l *logfmtHandler) HandleLogfmt(key, val []byte) error {
 	return nil
 }
 
-func parseLogfmt(in <-chan map[string]interface{}, key string) <-chan map[string]interface{} {
-	return mapOver(in, func(m map[string]interface{}) map[string]interface{} {
+func ParseLogfmt(in <-chan map[string]interface{}, key string) <-chan map[string]interface{} {
+	return Map(in, func(m map[string]interface{}) map[string]interface{} {
 		f, ok := m[key]
 		if !ok {
 			return m

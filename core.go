@@ -1,6 +1,6 @@
-package main
+package logfetch
 
-func filter(in <-chan map[string]interface{}, fn func(map[string]interface{}) bool) <-chan map[string]interface{} {
+func Filter(in <-chan map[string]interface{}, fn func(map[string]interface{}) bool) <-chan map[string]interface{} {
 	r := make(chan map[string]interface{})
 
 	go func() {
@@ -16,7 +16,7 @@ func filter(in <-chan map[string]interface{}, fn func(map[string]interface{}) bo
 	return r
 }
 
-func mapOver(in <-chan map[string]interface{}, fn func(map[string]interface{}) map[string]interface{}) <-chan map[string]interface{} {
+func Map(in <-chan map[string]interface{}, fn func(map[string]interface{}) map[string]interface{}) <-chan map[string]interface{} {
 	r := make(chan map[string]interface{})
 
 	go func() {
