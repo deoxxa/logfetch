@@ -4,13 +4,13 @@ import (
 	"sync"
 )
 
-func fanIn(in ...<-chan map[string]string) <-chan map[string]string {
-	r := make(chan map[string]string)
+func fanIn(in ...<-chan map[string]interface{}) <-chan map[string]interface{} {
+	r := make(chan map[string]interface{})
 
 	var wg sync.WaitGroup
 	for i := range in {
 		wg.Add(1)
-		go func(c <-chan map[string]string) {
+		go func(c <-chan map[string]interface{}) {
 			defer wg.Done()
 
 			for m := range c {
@@ -27,12 +27,12 @@ func fanIn(in ...<-chan map[string]string) <-chan map[string]string {
 	return r
 }
 
-func fanOut(in <-chan map[string]string, out ...func(<-chan map[string]string) <-chan map[string]string) []<-chan map[string]string {
-	r := make([]<-chan map[string]string, len(out))
+func fanOut(in <-chan map[string]interface{}, out ...func(<-chan map[string]interface{}) <-chan map[string]interface{}) []<-chan map[string]interface{} {
+	r := make([]<-chan map[string]interface{}, len(out))
 
-	c := make([]chan map[string]string, len(out))
+	c := make([]chan map[string]interface{}, len(out))
 	for i, o := range out {
-		c[i] = make(chan map[string]string)
+		c[i] = make(chan map[string]interface{})
 		r[i] = o(c[i])
 	}
 
@@ -53,6 +53,6 @@ func fanOut(in <-chan map[string]string, out ...func(<-chan map[string]string) <
 	return r
 }
 
-func fanThrough(in <-chan map[string]string, via ...func(<-chan map[string]string) <-chan map[string]string) <-chan map[string]string {
+func fanThrough(in <-chan map[string]interface{}, via ...func(<-chan map[string]interface{}) <-chan map[string]interface{}) <-chan map[string]interface{} {
 	return fanIn(fanOut(in, via...)...)
 }

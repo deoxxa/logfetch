@@ -1,7 +1,7 @@
 package main
 
-func filter(in <-chan map[string]string, fn func(map[string]string) bool) <-chan map[string]string {
-	r := make(chan map[string]string)
+func filter(in <-chan map[string]interface{}, fn func(map[string]interface{}) bool) <-chan map[string]interface{} {
+	r := make(chan map[string]interface{})
 
 	go func() {
 		defer close(r)
@@ -16,8 +16,8 @@ func filter(in <-chan map[string]string, fn func(map[string]string) bool) <-chan
 	return r
 }
 
-func mapOver(in <-chan map[string]string, fn func(map[string]string) map[string]string) <-chan map[string]string {
-	r := make(chan map[string]string)
+func mapOver(in <-chan map[string]interface{}, fn func(map[string]interface{}) map[string]interface{}) <-chan map[string]interface{} {
+	r := make(chan map[string]interface{})
 
 	go func() {
 		defer close(r)

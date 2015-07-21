@@ -32,8 +32,8 @@ type s3Options struct {
 	exclude string
 }
 
-func readFromS3(options s3Options) <-chan map[string]string {
-	ch := make(chan map[string]string)
+func readFromS3(options s3Options) <-chan map[string]interface{} {
+	ch := make(chan map[string]interface{})
 
 	c := s3.New(&aws.Config{
 		Credentials: credentials.NewStaticCredentials(*awsAccessKey, *awsSecretKey, ""),
@@ -156,7 +156,7 @@ func readFromS3(options s3Options) <-chan map[string]string {
 							continue
 						}
 
-						ch <- map[string]string{
+						ch <- map[string]interface{}{
 							"text":      l,
 							"s3_bucket": options.bucket,
 							"s3_key":    *o.Key,
