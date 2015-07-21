@@ -4,14 +4,18 @@ import (
 	"regexp"
 )
 
-func grok(in <-chan map[string]string, field, pattern string, keys []string) <-chan map[string]string {
+func grok(in <-chan map[string]string, field, pattern string) <-chan map[string]string {
 	r := regexp.MustCompile(pattern)
 
 	return mapOver(in, func(m map[string]string) map[string]string {
 		matches := r.FindStringSubmatch(m[field])
-		if len(matches) == len(keys)+1 {
-			for i, k := range keys {
-				m[k] = matches[i+1]
+		if matches != nil {
+			for i, k := range r.SubexpNames() {
+				if i == 0 {
+					continue
+				}
+
+				m[k] = matches[i]
 			}
 		}
 
