@@ -24,6 +24,7 @@ type S3Options struct {
 	Prefix    string
 	Include   string
 	Exclude   string
+	StateFile string
 }
 
 func ReadFromS3(options S3Options) <-chan map[string]interface{} {
@@ -36,11 +37,6 @@ func ReadFromS3(options S3Options) <-chan map[string]interface{} {
 
 	c := s3.New(cfg)
 
-	u, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-
 	var includeRegexp *regexp.Regexp
 	if options.Include != "" {
 		includeRegexp = regexp.MustCompile(options.Include)
@@ -51,14 +47,24 @@ func ReadFromS3(options S3Options) <-chan map[string]interface{} {
 		excludeRegexp = regexp.MustCompile(options.Exclude)
 	}
 
-	sha := crypto.SHA1.New()
-	sha.Write([]byte(strings.Join([]string{
-		options.Bucket,
-		options.Prefix,
-		options.Include,
-		options.Exclude,
-	}, "$$")))
-	stateFile := path.Join(u.HomeDir, ".logfetch", "s3_"+hex.EncodeToString(sha.Sum(nil)))
+	stateFile := options.StateFile
+
+	if stateFile == "" {
+		u, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+
+		sha := crypto.SHA1.New()
+		sha.Write([]byte(strings.Join([]string{
+			options.Bucket,
+			options.Prefix,
+			options.Include,
+			options.Exclude,
+		}, "$$")))
+
+		stateFile = path.Join(u.HomeDir, ".logfetch", "s3_"+hex.EncodeToString(sha.Sum(nil)))
+	}
 
 	if err := os.MkdirAll(path.Dir(stateFile), 0755); err != nil {
 		panic(err)
