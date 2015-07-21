@@ -143,6 +143,8 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 
 					r := bufio.NewReader(b)
 
+					var i int
+
 					for {
 						l, err := r.ReadString('\n')
 						if err == io.EOF {
@@ -150,6 +152,8 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 						} else if err != nil {
 							break
 						}
+
+						i++
 
 						l = strings.TrimSpace(l)
 						if l == "" {
@@ -160,6 +164,7 @@ func readFromS3(options s3Options) <-chan map[string]interface{} {
 							"text":      l,
 							"s3_bucket": options.bucket,
 							"s3_key":    *o.Key,
+							"s3_line":   i,
 						}
 					}
 
